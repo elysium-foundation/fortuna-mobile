@@ -52,9 +52,7 @@ describe(SmokeConfirmations('Send ETH'), () => {
         await TransactionConfirmationView.tapConfirmButton();
         await TabBarComponent.tapActivity();
 
-        await TestHelpers.checkIfElementByTextIsVisible(
-          `${AMOUNT} ${TOKEN_NAME}`,
-        );
+        await Assertions.checkIfTextIsDisplayed(`${AMOUNT} ${TOKEN_NAME}`);
       },
     );
   });
@@ -86,10 +84,7 @@ describe(SmokeConfirmations('Send ETH'), () => {
 
         await TransactionConfirmationView.tapConfirmButton();
         await TabBarComponent.tapActivity();
-
-        await TestHelpers.checkIfElementByTextIsVisible(
-          `${AMOUNT} ${TOKEN_NAME}`,
-        );
+        await Assertions.checkIfTextIsDisplayed(`${AMOUNT} ${TOKEN_NAME}`);
       },
     );
   });

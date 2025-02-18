@@ -1,11 +1,13 @@
 import React from 'react';
 import { Hex } from '@metamask/utils';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { parseSanitizeTypedDataMessage } from '../../../../utils/signatures';
 import { strings } from '../../../../../../../../locales/i18n';
 import { useSignatureRequest } from '../../../../hooks/useSignatureRequest';
+import Text from '../../../../../../../component-library/components/Texts/Text';
 import { useStyles } from '../../../../../../../component-library/hooks';
+import { useTypedSignSimulationEnabled } from '../../../../hooks/useTypedSignSimulationEnabled';
 import InfoRow from '../../../UI/InfoRow';
 import DataTree from '../../DataTree';
 import SignatureMessageSection from '../../SignatureMessageSection';
@@ -14,6 +16,7 @@ import styleSheet from './Message.styles';
 
 const Message = () => {
   const signatureRequest = useSignatureRequest();
+  const isSimulationSupported = useTypedSignSimulationEnabled();
   const chainId = signatureRequest?.chainId as Hex;
   const { styles } = useStyles(styleSheet, {});
 
@@ -31,12 +34,14 @@ const Message = () => {
   return (
     <SignatureMessageSection
       messageCollapsed={
-        <InfoRow
-          label={strings('confirm.primary_type')}
-          style={styles.collpasedInfoRow}
-        >
-          {primaryType}
-        </InfoRow>
+        isSimulationSupported ? undefined : (
+          <InfoRow
+            label={strings('confirm.primary_type')}
+            style={styles.collpasedInfoRow}
+          >
+            {primaryType}
+          </InfoRow>
+        )
       }
       messageExpanded={
         <View>
@@ -50,6 +55,7 @@ const Message = () => {
           <DataTree
             data={sanitizedMessage.value as unknown as DataTreeInput}
             chainId={chainId}
+            primaryType={primaryType}
           />
         </View>
       }

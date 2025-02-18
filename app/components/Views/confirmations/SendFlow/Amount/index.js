@@ -79,14 +79,7 @@ import { ThemeContext, mockTheme } from '../../../../../util/theme';
 import Alert, { AlertType } from '../../../../Base/Alert';
 
 import {
-  selectChainId,
-  selectNetworkClientId,
-  selectProviderType,
-  selectTicker,
-} from '../../../../../selectors/networkController';
-import { selectContractExchangeRates } from '../../../../../selectors/tokenRatesController';
-import {
-  selectConversionRate,
+  selectConversionRateByChainId,
   selectCurrentCurrency,
 } from '../../../../../selectors/currencyRateController';
 import { selectTokens } from '../../../../../selectors/tokensController';
@@ -106,6 +99,16 @@ import { withMetricsAwareness } from '../../../../../components/hooks/useMetrics
 import { selectGasFeeEstimates } from '../../../../../selectors/confirmTransaction';
 import { selectGasFeeControllerEstimateType } from '../../../../../selectors/gasFeeController';
 import { createBuyNavigationDetails } from '../../../../UI/Ramp/routes/utils';
+import {
+  // Pending updated multichain UX to specify the send chain.
+  /* eslint-disable no-restricted-syntax */
+  selectChainId,
+  selectNetworkClientId,
+  /* eslint-enable no-restricted-syntax */
+  selectNativeCurrencyByChainId,
+  selectProviderTypeByChainId,
+} from '../../../../../selectors/networkController';
+import { selectContractExchangeRatesByChainId } from '../../../../../selectors/tokenRatesController';
 import { isNativeToken } from '../../utils/generic';
 
 const KEYBOARD_OFFSET = Device.isSmallDevice() ? 80 : 120;
@@ -483,7 +486,7 @@ class Amount extends PureComponent {
     /**
      * String that indicates the current chain id
      */
-    chainId: PropTypes.string,
+    globalChainId: PropTypes.string,
     /**
      * Metrics injected by withMetricsAwareness HOC
      */
@@ -503,7 +506,7 @@ class Amount extends PureComponent {
     /**
      * Network client id
      */
-    networkClientId: PropTypes.string,
+    globalNetworkClientId: PropTypes.string,
   };
 
   state = {
@@ -892,14 +895,14 @@ class Amount extends PureComponent {
       transaction: { from },
       transactionTo,
     } = this.props.transactionState;
-    const { networkClientId } = this.props;
+    const { globalNetworkClientId } = this.props;
     const { gas } = await getGasLimit(
       {
         from,
         to: transactionTo,
       },
       false,
-      networkClientId,
+      globalNetworkClientId,
     );
 
     return gas;
@@ -1278,7 +1281,7 @@ class Amount extends PureComponent {
       navigation,
       isNetworkBuyNativeTokenSupported,
       swapsIsLive,
-      chainId,
+      globalChainId,
       ticker,
     } = this.props;
     const colors = this.context.colors || mockTheme.colors;
@@ -1299,7 +1302,7 @@ class Amount extends PureComponent {
       !isNativeToken(selectedAsset) &&
       AppConstants.SWAPS.ACTIVE &&
       swapsIsLive &&
-      isSwapsAllowed(chainId) &&
+      isSwapsAllowed(globalChainId) &&
       amountError === strings('transaction.insufficient');
 
     const navigateToBuyOrSwaps = () => {
@@ -1580,32 +1583,41 @@ class Amount extends PureComponent {
 
 Amount.contextType = ThemeContext;
 
-const mapStateToProps = (state, ownProps) => ({
-  accounts: selectAccounts(state),
-  contractExchangeRates: selectContractExchangeRates(state),
-  contractBalances: selectContractBalances(state),
-  collectibles: collectiblesSelector(state),
-  collectibleContracts: collectibleContractsSelector(state),
-  conversionRate: selectConversionRate(state),
-  currentCurrency: selectCurrentCurrency(state),
-  gasEstimateType: selectGasFeeControllerEstimateType(state),
-  gasFeeEstimates: selectGasFeeEstimates(state),
-  providerType: selectProviderType(state),
-  primaryCurrency: state.settings.primaryCurrency,
-  selectedAddress: selectSelectedInternalAccountFormattedAddress(state),
-  ticker: selectTicker(state),
-  tokens: selectTokens(state),
-  transactionState: ownProps.transaction || state.transaction,
-  selectedAsset: state.transaction.selectedAsset,
-  isPaymentRequest: state.transaction.paymentRequest,
-  isNetworkBuyNativeTokenSupported: isNetworkRampNativeTokenSupported(
-    selectChainId(state),
-    getRampNetworks(state),
-  ),
-  swapsIsLive: swapsLivenessSelector(state),
-  chainId: selectChainId(state),
-  networkClientId: selectNetworkClientId(state),
-});
+const mapStateToProps = (state, ownProps) => {
+  const transaction = ownProps.transaction || state.transaction;
+  const globalChainId = selectChainId(state);
+  const globalNetworkClientId = selectNetworkClientId(state);
+
+  return {
+    accounts: selectAccounts(state),
+    contractExchangeRates: selectContractExchangeRatesByChainId(
+      state,
+      globalChainId,
+    ),
+    contractBalances: selectContractBalances(state),
+    collectibles: collectiblesSelector(state),
+    collectibleContracts: collectibleContractsSelector(state),
+    conversionRate: selectConversionRateByChainId(state, globalChainId),
+    currentCurrency: selectCurrentCurrency(state),
+    gasEstimateType: selectGasFeeControllerEstimateType(state),
+    gasFeeEstimates: selectGasFeeEstimates(state),
+    providerType: selectProviderTypeByChainId(state, globalChainId),
+    primaryCurrency: state.settings.primaryCurrency,
+    selectedAddress: selectSelectedInternalAccountFormattedAddress(state),
+    ticker: selectNativeCurrencyByChainId(state, globalChainId),
+    tokens: selectTokens(state),
+    transactionState: transaction,
+    selectedAsset: state.transaction.selectedAsset,
+    isPaymentRequest: state.transaction.paymentRequest,
+    isNetworkBuyNativeTokenSupported: isNetworkRampNativeTokenSupported(
+      globalChainId,
+      getRampNetworks(state),
+    ),
+    swapsIsLive: swapsLivenessSelector(state),
+    globalChainId,
+    globalNetworkClientId,
+  };
+};
 
 const mapDispatchToProps = (dispatch) => ({
   setTransactionObject: (transaction) =>
