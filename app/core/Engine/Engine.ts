@@ -251,6 +251,7 @@ import {
 import { createMultichainAssetsController } from './controllers/MultichainAssetsController';
 ///: END:ONLY_INCLUDE_IF
 import { createMultichainNetworkController } from './controllers/MultichainNetworkController';
+import { isTest } from '../../util/test/utils';
 
 const NON_EMPTY = 'NON_EMPTY';
 
@@ -1132,7 +1133,7 @@ export class Engine {
     const userStorageController = new UserStorageController.Controller({
       getMetaMetricsState: () => MetaMetrics.getInstance().isEnabled(),
       env: {
-        isAccountSyncingEnabled: Boolean(process.env.IS_TEST),
+        isAccountSyncingEnabled: Boolean(isTest),
       },
       config: {
         accountSyncing: {
