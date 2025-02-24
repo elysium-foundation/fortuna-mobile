@@ -676,11 +676,10 @@ export class Engine {
     };
 
     additionalKeyrings.push(
-      snapKeyringBuilder(
-        snapKeyringBuildMessenger,
-        persistAndUpdateAccounts,
-        (address) => this.removeAccount(address),
-      ),
+      snapKeyringBuilder(snapKeyringBuildMessenger, {
+        persistKeyringHelper: () => persistAndUpdateAccounts(),
+        removeAccountHelper: (address) => this.removeAccount(address),
+      }),
     );
 
     ///: END:ONLY_INCLUDE_IF
@@ -2014,7 +2013,6 @@ export class Engine {
     await removeAccountsFromPermissions([address]);
     // Remove account from the keyring
     await this.keyringController.removeAccount(address as Hex);
-    return address;
   };
   ///: END:ONLY_INCLUDE_IF
 
